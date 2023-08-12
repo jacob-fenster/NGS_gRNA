@@ -20,17 +20,3 @@ head -n 20000 /Volumes/Jacob_Drive/78k_ngs_andrew/Reads/R1-1_R1_001.fastq > test
 head -n 20000 /Volumes/Jacob_Drive/78k_ngs_andrew/Reads/R1-1_R2_001.fastq > test_data/R1-1_short_R2_001.fastq
 head -n 20000 /Volumes/Jacob_Drive/78k_ngs_andrew/Reads/R1-2_R1_001.fastq > test_data/R1-2_short_R1_001.fastq
 head -n 20000 /Volumes/Jacob_Drive/78k_ngs_andrew/Reads/R1-2_R2_001.fastq > test_data/R1-2_short_R2_001.fastq
-
-//this is the profile to run on my local mac with the prescribed docker containers
-profiles {
-    local {
-        docker {
-            enabled = true 
-        }
-        process {
-            withName:mergefastq {
-                container = 'jacobfenster/bbmerge:1.0'
-            }
-        }
-    }
-}
