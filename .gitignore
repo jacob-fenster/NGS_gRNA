@@ -1,0 +1,15 @@
+#test files
+test.nf
+
+#nextflow cache/log
+.nextflow/
+*.log
+*.log.*
+work/
+
+#output and Data files
+output/
+data/
+
+#git readme 
+README_git
