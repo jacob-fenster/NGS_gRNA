@@ -11,7 +11,7 @@ RUN apt-get update \
     && apt-get install -y wget \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* 
-#RUN apt-get update
+#Install java
 RUN apt-get update \
     && apt-get install -y openjdk-11-jre-headless 
 #copy bbmap script suite to the /opt linux folder

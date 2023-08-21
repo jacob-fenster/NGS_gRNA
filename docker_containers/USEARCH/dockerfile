@@ -1,0 +1,19 @@
+#this is a dockerfile that can run USEARCH usearch11.0.667_i86linux32
+#load ubuntu linux 20.04 on an amd64 platform
+FROM --platform=linux/amd64 ubuntu:20.04
+WORKDIR /app
+#command to not have interactive mode to solve java install
+ARG DEBIAN_FRONTEND=noninteractive
+# Install base utilities
+RUN apt-get update \
+    && apt-get install -y build-essential \
+    && apt-get install -y wget \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* 
+#copy bbmap script suite to the /opt linux folder
+COPY usearch /opt
+#add the /opt directory to the PATH variable
+ENV PATH=/opt:$PATH
+
+#this is the Usaerch merge command I will try
+#$ usearch -fastq_mergepairs test_data/R1-1_short_R1_001.fastq -reverse test_data/R1-1_short_R2_001.fastq 

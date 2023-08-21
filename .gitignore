@@ -13,6 +13,9 @@ work/
 #My local working output and data files
 output/
 data/
+software/
+databases/PPutida_gRNA_Libraries
+papers/
 
 #git readme 
 README_git

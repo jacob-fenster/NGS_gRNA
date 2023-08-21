@@ -20,3 +20,32 @@ head -n 20000 /Volumes/Jacob_Drive/78k_ngs_andrew/Reads/R1-1_R1_001.fastq > test
 head -n 20000 /Volumes/Jacob_Drive/78k_ngs_andrew/Reads/R1-1_R2_001.fastq > test_data/R1-1_short_R2_001.fastq
 head -n 20000 /Volumes/Jacob_Drive/78k_ngs_andrew/Reads/R1-2_R1_001.fastq > test_data/R1-2_short_R1_001.fastq
 head -n 20000 /Volumes/Jacob_Drive/78k_ngs_andrew/Reads/R1-2_R2_001.fastq > test_data/R1-2_short_R2_001.fastq
+
+testing out bbmerge parameters
+docker_containers/bbmerge/software/bbmap/bbmerge.sh trimnonoverlapping=t in=output/R1-1_reallyshort_R1.fastq in2=output/R1-1_reallyshort_R2.fastq out=output/R1-1_merged.fq outu1=output/unmerg1.fq outu2=output/unmerg2.f1q
+testing allowed overlap errors
+docker_containers/bbmerge/software/bbmap/bbmerge.sh trimnonoverlapping=t in=test_data/R1-1_short_R1_001.fastq in2=test_data/R1-1_short_R2_001.fastq out=output/R1-1merged.fq efilter=6 ihist=hist_efil_6.txt 
+THis is a test merge that can be more easily made with each
+docker_containers/bbmerge/software/bbmap/bbmerge.sh trimnonoverlapping=t in=/Volumes/Jacob_Drive/78k_ngs_andrew/Reads/R1-1_R1_001.fastq in2=/Volumes/Jacob_Drive/78k_ngs_andrew/Reads/R1-1_R2_001.fastq ihist=R1-1_hist.txt 
+
+
+process test_merge {
+    publishDir 'output', pattern: '*.txt', mode: 'copy'
+    input:
+    //the Channel.fromFilePairs sends in tuples of [sampleID, [file[0], file[1]]
+        tuple val(sampleID), file(read)
+    //this will output two channels in order with a list emitted
+    output:
+        path '*_merged.fq'
+        path '*.txt'
+    script:
+    // here I could have also used 'each' in inputs to iterate over parameters
+    """
+    bbmerge.sh in=${read[0]} in2=${read[1]} out=${sampleID}_strict_merged.fq ihist=${sampleID}_strict.txt trimnonoverlapping=t strict=t
+    bbmerge.sh in=${read[0]} in2=${read[1]} out=${sampleID}_std_merged.fq ihist=${sampleID}_std.txt trimnonoverlapping=t 
+    bbmerge.sh in=${read[0]} in2=${read[1]} out=${sampleID}_vloose_merged.fq ihist=${sampleID}_vloose.txt trimnonoverlapping=t veryloose=t
+    bbmerge.sh in=${read[0]} in2=${read[1]} out=${sampleID}_mloose_merged.fq ihist=${sampleID}_mloose.txt trimnonoverlapping=t maxloose=t
+    """
+}
+
+
