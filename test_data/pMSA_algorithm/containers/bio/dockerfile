@@ -1,0 +1,41 @@
+#Name: jacobfenster/bio:v1.0
+#docker container to load python bio modules 
+#load ubuntu linux 20.04 on an amd64 platform
+FROM --platform=linux/amd64 ubuntu:20.04
+WORKDIR /app
+#command to not have interactive mode to solve java install
+ARG DEBIAN_FRONTEND=noninteractive
+# Install base utilities
+RUN apt-get update \
+    && apt-get install -y build-essential \
+    && apt-get install -y wget \
+    && apt-get clean
+#install python3.11.4 and pip
+RUN apt-get update && apt-get install -y software-properties-common \
+    && add-apt-repository -y ppa:deadsnakes/ppa \
+    && apt-get update \
+    && apt-get install -y python3.11 python3.11-distutils \
+    && update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 1 \
+    && wget https://bootstrap.pypa.io/get-pip.py && python3 get-pip.py && rm get-pip.py
+#install python packages
+RUN pip install pandas==2.0.3 \
+    && pip install biopython==1.81 && pip install matplotlib==3.7.2 
+#install HMMER
+RUN apt-get install -y hmmer
+# Define BLAST version
+ENV BLAST_VERSION 2.14.0
+# Download and install BLAST
+RUN wget https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/${BLAST_VERSION}/ncbi-blast-${BLAST_VERSION}+-x64-linux.tar.gz \
+    && tar -xzvf ncbi-blast-${BLAST_VERSION}+-x64-linux.tar.gz \
+    && cp ncbi-blast-${BLAST_VERSION}+/bin/* /opt \
+    && rm -r ncbi-blast-${BLAST_VERSION}+-x64-linux.tar.gz ncbi-blast-${BLAST_VERSION}+
+#copy precompiled clustalo-1.2.4-Ubuntu-x86_64 into /opt folder
+COPY clustalo /opt
+#give execute permissions
+RUN chmod +x /opt/clustalo
+#install hh-suite
+RUN wget https://github.com/soedinglab/hh-suite/releases/download/v3.3.0/hhsuite-3.3.0-AVX2-Linux.tar.gz \
+    && mkdir /opt/hhsuite && tar xvfz hhsuite-3.3.0-AVX2-Linux.tar.gz -C /opt/hhsuite && rm hhsuite-3.3.0-AVX2-Linux.tar.gz
+ENV PATH=/opt:/opt/hhsuite/bin:/opt/hhsuite/scripts:$PATH
+#delete cache/opt:$PATH
+RUN rm -rf /var/lib/apt/lists/*

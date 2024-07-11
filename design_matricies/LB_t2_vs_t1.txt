@@ -1,0 +1,5 @@
+Samples	baseline	LB_t2_vs_t1
+LB_t1_R1	1	0
+LB_t1_R2	1	0
+LB_t2_R1	1	1
+LB_t2_R2	1	1

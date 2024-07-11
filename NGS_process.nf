@@ -1,63 +1,41 @@
-params.gRNA_database = "$baseDir/databases/Lib3_dCas9/Lib3_dCas9"
-
-process Mergefastq {
-    // Final merge process, trained with test_merge
-    publishDir 'output', pattern: '*_hist.txt', mode: 'copy'
+process bbmerge {
+    publishDir "${params.publish_dir}", pattern: '*.txt', mode: 'copy'
+    //publishDir "${params.publish_dir}", pattern: '*_merged.fastq', mode: 'symlink'
     input:
-    //the Channel.fromFilePairs sends in tuples of [sampleID, [file[0], file[1]]
         tuple val(sampleID), file(read)
-        each mode
     output:
-        path '*_merged.fq'
+        path '*_merged.fastq'
         path '*_hist.txt'
     script:
     """
-    bbmerge.sh in=${read[0]} in2=${read[1]} out=${sampleID}_${mode.replaceAll(/=/, "_")}_merged.fq ihist=${sampleID}_${mode.replaceAll(/=/, "_")}_hist.txt trimnonoverlapping=t ${mode}
+    bbmerge.sh in=${read[0]} in2=${read[1]} out=${sampleID}_merged.fastq ihist=${sampleID}_hist.txt trimnonoverlapping=t 
     """
 }
 
-
-process Fastq_to_Fasta {
-    // converts Fastq files to Fasta
-    input:
-        path fastq
+process exact_seed {
+    //This inputs a list of merged fastq file paths and calculates the number of exact matching seed reads
+    //outputs a counts per seed .csv and a filtered reads stats .csv file 
+    publishDir "${params.publish_dir}", pattern: '*-counts.tsv', mode: 'copy'
+    publishDir "${params.publish_dir}", pattern: '*-filread_stats.tsv', mode: 'copy'
+    input: 
+        path merged_fastq
     output:
-        path "*.fasta"
-    
+        path "*-counts.tsv"
+        path "*-read_stats.tsv"
     script:
     """
-    awk 'NR%4==1 {printf ">%s\\n", substr(\$0, 2)} NR%4==2 {print}' "${fastq}" > "${fastq.getBaseName()}.fasta"
+    python3 $projectDir/scripts/exact_seed_reads_df.py ${params.seed_db} ${params.exp_tag}-counts.csv ${params.exp_tag}-filread_stats.csv ${merged_fastq}
     """
 }
 
-process Blastn {
-    input:
-        path fasta
-    output:
-        path "*.txt"
-    script:
-    """
-    blastn -query ${fasta} -db ${params.gRNA_database} -strand both -task blastn -max_target_seqs 1 -outfmt 6 -out ${fasta.getBaseName()}.txt
-    """
-}
+params.input_reads_dir = "/Volumes/Extreme_SSD/78K_CRISPRi/Expanded"
+// params.input_design_matricies = "/Users/jacobfenster/Documents/NGS_gRNA/design_matricies"
+params.publish_dir = "/Users/jacobfenster/Documents/NGS_gRNA/output/20231126_exact_counts"
+params.seed_db = "/Users/jacobfenster/Documents/NGS_gRNA/databases/Lib3_dCas9_78K_seeds.csv"
+params.exp_tag = "20231126_carbon_sources"
 
 workflow {
-    //this makes a channel of fastq file pairs with R1 and R2 identifiers
-    //and sends them in as tuples of [sampleID, [file[0], file[1]]
-    bbmerge_strictness = ['strict=t', 'loose=t', '']
-    
-    fastq_input = Channel.fromFilePairs('test_data/*_R{1,2}_*.fastq')
-    (merged_strictness, hist_strict) = Mergefastq(fastq_input, bbmerge_strictness)
-   
-    align_strict = Fastq_to_Fasta(merged_strictness) | Blastn
-    
-    //if we don't flatten this will give a list for each merged read
-    //this can now be sent into blast alignments
-
-}
-workflow {
-    bbmerge_errors = ['efilter=20', 'efilter=2']
-    fastq_input = Channel.fromFilePairs('test_data/*_R{1,2}_*.fastq')
-    (merged_errors, hist_errors) = Mergefastq(fastq_input, bbmerge_errors)
-    align_errors = Fastq_to_Fasta(merged_errors) | Blastn
+    raw_fastq = Channel.fromFilePairs("${params.input_reads_dir}/*_R{1,2}_*.fastq")
+    (merged_fastq, hist) = bbmerge(raw_fastq)
+    (reads, fil_readstats) = exact_seed(merged_fastq.collect())
 }
