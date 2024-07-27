@@ -1,5 +1,8 @@
 # Amplicon seq read processing and analysis for genome-wide CRISPRi functional genomics 
-This is a workflow to process fastq reads into enrichment scores and 
+This is a workflow to process fastq reads into enrichment scores and then analysze the hits
+This repo is currently under development and is not in its final form
+
+## notes
 Steps
 1. Merge reads with BBmerge
 bbmerge.sh in=reads.fq out=merged.fq outu=unmerged.fq ihist=ihist.txt
@@ -12,6 +15,17 @@ bbmerge.sh in=reads.fq out=merged.fq outu=unmerged.fq ihist=ihist.txt
 Nextflow will run each module in its own docker container with all dependencies installed
 It will have two profiles for running locally or globally
 
+## Brainstorming for next steps
+1. Volcano plot in R with corresponding gRNA plots in R
+1. homology search each hit aginst swisprot/uniref db
+1. network analysis 
+1. FBA 
+
+## growth rate analysis 
+ratio of mutant growth rate to WT:
+    e/g
+    where e is the lfc enrichment of mutant vs doublings of culture.
+    There are 10^.5 doublings = 3.162278
 
 # test case bb merge. Must specify read 2 otherwise it goes interleaved
 bbmerge.sh in=test_data/CJ019-C1-8hshort_R1_001.fastq in2=test_data/CJ019-C1-8hshort_R2_001.fastq out=testmerge.fq outu=unmergedtest.fq ihist=ihisttest.txt
